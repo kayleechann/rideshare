@@ -58,10 +58,6 @@ conn.commit()
 print('Rides Table Created')
 """
 
-# Print out connection to verify and close
-# print(conn)
-# conn.close()
-
 #start screen of code
 def startScreen():
     print("Welcome to your ride share app!")
@@ -94,8 +90,6 @@ def add_user():
         cur_obj.execute(insertQuery, (new_user_id, name, 5.0, license_plate, False))
         conn.commit()
         
-        
-        
 # find the highest id number in rider and driver table, add 1, and return the new_id
 def highest_id():
     # find the highest id number in the rider table
@@ -121,6 +115,36 @@ def highest_id():
         
     return new_id
 
+# check if the user is a rider or driver
+def check_user():
+    while True:
+        userID = input("What is your riderID or driverID?\n")
+        
+        # check if userID is a rider
+        query = '''
+        SELECT COUNT(*)
+        FROM rider
+        WHERE riderID = %s
+        '''
+        cur_obj.execute(query, (userID,))
+        isRider = cur_obj.fetchone()[0]
+        
+        # check if userID is a driver
+        query = '''
+        SELECT COUNT(*)
+        FROM driver
+        WHERE driverID = %s
+        '''
+        cur_obj.execute(query, (userID,))
+        isDriver = cur_obj.fetchone()[0]
+        
+        if isRider == 1:
+            return 1
+        elif isDriver == 1:
+            return 0
+        else:
+            print("Incorrect userID. Try Again.")
+
 #main program
 startScreen()
 
@@ -133,8 +157,14 @@ if num == 1:
     # make an account for respective user
 # else, ask the user for their userID
 else:
-    userID = print("What is your riderID or driverID?")
     # determine if they are a rider or driver
+    # if user_type = 1, user is a rider
+    # if user_type = 0, user is a driver
+    user_type = check_user()
+    if user_type == 1:
+        print("rider")
+    else:
+        print("driver")
 
 # if user is a driver, show the following options:
     # 1. view their current rating
