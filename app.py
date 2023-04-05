@@ -1,6 +1,7 @@
 from helper import helper
 from datetime import date
 from datetime import datetime
+from tabulate import tabulate
 
 # import MySQL
 import mysql.connector
@@ -33,7 +34,7 @@ query2 = '''
     CREATE TABLE driver(
         driverID INT NOT NULL PRIMARY KEY,
         fullName VARCHAR(40),
-        rating DECIMAL,
+        rating DECIMAL(2,1),
         licensePlate VARCHAR(7),
         driverMode BOOLEAN
     )
@@ -157,6 +158,7 @@ def driver_menu():
         ''')
     return helper.get_choice([1,2,3])
 
+# shows the rider their options
 def rider_menu():
     print('''Select from the following menu options:
     1. View all past rides
@@ -165,14 +167,17 @@ def rider_menu():
           ''')
     return helper.get_choice([1,2,3])
 
-def current_rating():
+# shows the driver their current rating
+def current_rating(driver_id):
     query = '''
     SELECT rating
     FROM driver
+    WHERE driverID = %s
     '''
-    cur_obj.execute(query)
+    cur_obj.execute(query, (driver_id,))
     return cur_obj.fetchone()[0]
 
+# changes the driver mode
 def change_driver_mode():
     print("Would you like to activate (1) or deactivate (0) driver mode?")
     choice = helper.get_choice([0,1])
@@ -211,6 +216,8 @@ def find_driver():
     cur_obj.execute(query2, (rideID, pickup, dropoff, now, userID, driverID))
     conn.commit()
     
+    print("This is your rideID: " + str(rideID))
+    
 # find an unused rideID
 def new_rideID():
     # find the highest id number in the rides table
@@ -223,7 +230,105 @@ def new_rideID():
     
     new_id = max_riderID + 1
     return new_id
+
+# lets the rider rate their driver 
+def rate_driver():
+    last_driverID = last_ride()
+    driver_info(last_driverID)
     
+    while True:
+        print("Is this the correct driver you would like to rate? Yes (1) or No (2)")
+        isCorrect = helper.get_choice([1,2])
+        
+        if isCorrect == 1:
+            user_rating = input("On a scale of 1-5, what would you like to rate your driver?\nRating: ")
+            cur_rating = current_rating(last_driverID)
+            new_rating = float((int(user_rating) + int(cur_rating)) / 2)
+            update_rating(last_driverID, new_rating)
+            break
+        else:
+            new_ride = input("Enter the rideID of the ride you would like to rate: ")
+            new_driver = get_driverID(new_ride)
+            driver_info(new_driver)
+
+# return the driverID of the last ride that the rider took
+def last_ride():
+    query = '''
+    SELECT driverID
+    FROM rides
+    WHERE riderID = %s
+    ORDER BY dateAndTime DESC
+    LIMIT 1
+    '''
+    cur_obj.execute(query, (userID,))
+    driverID = cur_obj.fetchall()[0][0]
+    return driverID
+
+# prints driver's information to the user
+def driver_info(driver_id):
+    query = '''
+    SELECT *
+    FROM driver
+    WHERE driverID = %s
+    '''
+    cur_obj.execute(query, (driver_id,))
+    results = cur_obj.fetchone()
+    
+    # prints all attributes of the driverID, except driverMode
+    print("\nDriver information: ")
+    for attribute in range(len(results) - 1):
+        name = cur_obj.description[attribute][0]
+        value = results[attribute]
+        print(str(name) + ": " + str(value))
+        
+# get driverID from rideID
+def get_driverID(ride_id):
+    query = '''
+    SELECT driverID
+    FROM rides
+    WHERE rideID = %s
+    '''
+    cur_obj.execute(query, (ride_id,))
+    results = cur_obj.fetchall()[0][0]
+    return results
+
+# updates driver's rating
+def update_rating(driver_id, new_rating):
+    query = '''
+    UPDATE driver
+    SET rating = %s
+    WHERE driverID = %s
+    '''
+    cur_obj.execute(query, (new_rating, driver_id))
+    conn.commit()
+    print("Successfully rated driver!")
+    print(current_rating(driver_id))
+    
+# list all rides of rider
+def list_rider_rides():
+    query = '''
+    SELECT rideID, pickupLocation, dropoffLocation, dateAndTime
+    FROM rides
+    WHERE riderID = %s
+    '''
+    cur_obj.execute(query, (userID,))
+    results = cur_obj.fetchall()
+    
+    print("Your rides: ")
+    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Time and Date'],tablefmt='psql'))
+
+# list all rides of driver
+def list_driver_rides():
+    query = '''
+    SELECT rideID, pickupLocation, dropoffLocation, dateAndTime
+    FROM rides
+    WHERE driverID = %s
+    '''
+    cur_obj.execute(query, (userID,))
+    results = cur_obj.fetchall()
+    
+    print("Your rides: ")
+    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Time and Date'],tablefmt='psql'))
 
 #main program
 startScreen()
@@ -243,45 +348,30 @@ else:
     # if user_type = 0, user is a driver
     user_type = check_user()
     if user_type == 1:
-        user_choice = rider_menu()
-        if user_choice == 1:
-            # view all rides
-            print("rides: ")
-        if user_choice == 2:
-            # find a driver
-            find_driver()
+        while True:
+            user_choice = rider_menu()
+            if user_choice == 1:
+                # view all rides
+                list_rider_rides()
+                break
+            if user_choice == 2:
+                # find a driver
+                find_driver()
+            if user_choice == 3:
+                # rate a driver
+                rate_driver()
+                break
     else:
         user_choice = driver_menu()
         if user_choice == 1:
             # view current rating
-            rating = current_rating()
+            rating = current_rating(userID)
             print("Your current rating: " + str(rating))
         if user_choice == 2:
             # view all rides
-            print("rides: ")
+            list_driver_rides()
         if user_choice == 3:
             # change driver mode
             change_driver_mode()
 
-# if user is a driver, show the following options:
-    # 1. view their current rating DONE
-    # 2. view all rides they have driven for
-    # 3. driver mode (activate/deactivate) DONE
-    
-# if user is a rider, show the following options:
-    # 1. view all rides they have taken
-    # 2. find a driver
-        # match rider with a driver that is activated
-        # rider will be prompted for pick up & drop off location
-        # create a ride
-        # provide user with riderID
-        # send rider back to the options menu
-    # 3. rate driver
-        # get user's last ride and get driver's ID
-        # print information to user and ask if it's correct
-        # if it's incorrect, have user enter the rideID
-        # print information and ask user if it's correct
-        # ask user for new rating 
-        # calculate driver's new rating (current rating + new rating)/2
-
-#db_ops.destructor()
+conn.close()
