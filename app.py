@@ -1,5 +1,6 @@
 from helper import helper
 from db_operations import db_operations
+from datetime import date
 
 # import MySQL
 import mysql.connector
@@ -14,58 +15,126 @@ conn = mysql.connector.connect(host="localhost",
 # create cursor object
 cur_obj = conn.cursor()
 
-# confirm execution worked by printing result
-cur_obj.execute("SHOW DATABASES;")
-for row in cur_obj:
-    print(row)
-    
+"""  
 # create rider table
-cur_obj.execute('''
+query = '''
     CREATE TABLE rider(
         riderID INT NOT NULL PRIMARY KEY,
-        fullName VARCHAR(40),
-        creationDate DATE,
+        fullName VARCHAR(40)
+        creationDate DATETIME
     );
-''')
+'''
+cur_obj.execute(query)
+conn.commit()
+print('Rider Table Created')
 
 # create driver table
-cur_obj.execute('''
+query = '''
     CREATE TABLE driver(
         driverID INT NOT NULL PRIMARY KEY,
         fullName VARCHAR(40),
         rating DECIMAL,
-        driverMode VARCHAR(20),
         licensePlate VARCHAR(7),
+        driverMode BOOLEAN
     );
-''')
+'''
+cur_obj.execute(query)
+conn.commit()
+print('Driver Table Created')
 
-# create ride table
-cur_obj.execute('''
+# create rides table
+query = '''
     CREATE TABLE rides(
         rideID INT NOT NULL PRIMARY KEY,
         pickupLocation VARCHAR(40),
         dropoffLocation VARCHAR(40),
         dateAndTime DATETIME,
+        FOREIGN KEY (riderID) REFERENCES rider(riderID),
+        FOREIGN KEY (driverID) REFERENCES driver(driverID)
     );
-''')
+'''
+cur_obj.execute(query)
+conn.commit()
+print('Rides Table Created')
+"""
 
 # Print out connection to verify and close
-print(conn)
-conn.close()
+# print(conn)
+# conn.close()
 
 #start screen of code
 def startScreen():
     print("Welcome to your ride share app!")
-
+    
+# add a new user
+def add_user():
+    user_type = print("Do you want to create a rider (1) or driver (2) account?")
+    choice = helper.get_choice([1,2])
+    new_user_id = highest_id()
+    
+    # create a new rider
+    if choice == 1:
+        name = input("Enter your full name: ")
+        
+        insertQuery = '''
+        INSERT INTO rider
+        VALUES(%s,%s,%s)
+        '''
+        cur_obj.execute(insertQuery, (new_user_id, name, date.today()))
+        conn.commit()
+    # create a new driver
+    else:
+        name = input("Enter your full name: ")
+        license_plate = input("Enter your license plate #: ")
+        
+        insertQuery = '''
+        INSERT INTO driver
+        VALUES(%s,%s,%s,%s,%s)
+        '''
+        cur_obj.execute(insertQuery, (new_user_id, name, 5.0, license_plate, False))
+        conn.commit()
+        
+        
+        
+# find the highest id number in rider and driver table, add 1, and return the new_id
+def highest_id():
+    # find the highest id number in the rider table
+    query1 = '''
+    SELECT MAX(riderID)
+    FROM rider
+    '''
+    cur_obj.execute(query1)
+    max_riderID = cur_obj.fetchone()[0]
+    
+    # find the highest id number in the driver table
+    query2 = '''
+    SELECT MAX(driverID)
+    FROM driver
+    '''
+    cur_obj.execute(query2)
+    max_driverID = cur_obj.fetchone()[0]
+    
+    if int(max_riderID) > int(max_driverID):
+        new_id = max_riderID + 1
+    else:
+        new_id = max_driverID + 1
+        
+    return new_id
 
 #main program
 startScreen()
 
 # ask user if they are a new or returning user
-    # if new, ask if rider or driver
-        # make an account for respective user
-    # else, ask the user for their userID
-        # determine if they are a rider or driver
+user_type = print("Are you a new (1) or returning user (2)?")
+num = helper.get_choice([1,2])
+# if new, ask if rider or driver
+if num == 1:
+    add_user()
+    # make an account for respective user
+# else, ask the user for their userID
+else:
+    userID = print("What is your riderID or driverID?")
+    # determine if they are a rider or driver
 
 # if user is a driver, show the following options:
     # 1. view their current rating

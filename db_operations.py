@@ -9,28 +9,49 @@ class db_operations():
         self.cursor = self.connection.cursor()
         print("connection made..")
 
-    #creates table songs in our database
-    def create_songs_table(self):
+    #creates table rider in our database
+    def create_rider_table(self):
         query = '''
-        CREATE TABLE songs(
-            songID VARCHAR(22) NOT NULL PRIMARY KEY,
-            Name VARCHAR(20),
-            Artist VARCHAR(20),
-            Album VARCHAR(20),
-            releaseDate DATETIME,
-            Genre VARCHAR(20),
-            Explicit BOOLEAN,
-            Duration DOUBLE,
-            Energy DOUBLE,
-            Danceability DOUBLE,
-            Acousticness DOUBLE,
-            Liveness DOUBLE,
-            Loudness DOUBLE
+        CREATE TABLE rider(
+            riderID INT NOT NULL PRIMARY KEY,
+            fullName VARCHAR(40),
+            creationDate DATE
         );
         '''
         self.cursor.execute(query)
         self.connection.commit()
-        print('Table Created')
+        print('Rider Table Created')
+        
+    #creates table driver in our database
+    def create_driver_table(self):
+        query = '''
+        CREATE TABLE driver(
+            driverID INT NOT NULL PRIMARY KEY,
+            fullName VARCHAR(40),
+            rating DECIMAL,
+            driverMode VARCHAR(20),
+            licensePlate VARCHAR(7)
+        );
+        '''
+        self.cursor.execute(query)
+        self.connection.commit()
+        print('Driver Table Created')
+        
+    #creates table rides in our database
+    def create_rides_table(self):
+        query = '''
+        CREATE TABLE rides(
+            rideID INT NOT NULL PRIMARY KEY,
+            pickupLocation VARCHAR(40),
+            dropoffLocation VARCHAR(40),
+            dateAndTime DATETIME,
+            FOREIGN KEY (riderID) REFERENCES rider(riderID),
+            FOREIGN KEY (driverID) REFERENCES driver(driverID)
+        );
+        '''
+        self.cursor.execute(query)
+        self.connection.commit()
+        print('Rides Table Created')
 
     # function to return a single value from table
     def single_record(self,query):
