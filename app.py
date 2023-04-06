@@ -81,6 +81,7 @@ def add_user():
         '''
         cur_obj.execute(insertQuery, (new_user_id, name, date.today()))
         conn.commit()
+        print("Rider account created!")
     # create a new driver
     else:
         name = input("Enter your full name: ")
@@ -92,6 +93,7 @@ def add_user():
         '''
         cur_obj.execute(insertQuery, (new_user_id, name, 5.0, license_plate, False))
         conn.commit()
+        print("Driver account created")
         
 # find the highest id number in rider and driver table, add 1, and return the new_id
 def highest_id():
@@ -151,7 +153,7 @@ def check_user():
 
 # shows the driver their options
 def driver_menu():
-    print('''Select from the following menu options:
+    print('''\nSelect from the following menu options:
     1. View current rating
     2. View all rides you have driven for
     3. Change driver mode
@@ -160,7 +162,7 @@ def driver_menu():
 
 # shows the rider their options
 def rider_menu():
-    print('''Select from the following menu options:
+    print('''\nSelect from the following menu options:
     1. View all past rides
     2. Find a driver
     3. Rate a driver
@@ -179,7 +181,7 @@ def current_rating(driver_id):
 
 # changes the driver mode
 def change_driver_mode():
-    print("Would you like to activate (1) or deactivate (0) driver mode?")
+    print("\nWould you like to activate (1) or deactivate (0) driver mode?")
     choice = helper.get_choice([0,1])
     
     query = '''
@@ -189,6 +191,11 @@ def change_driver_mode():
     '''
     cur_obj.execute(query, (choice, userID))
     conn.commit()
+    
+    if choice == 1:
+        print("\nDriver mode activated!")
+    if choice == 0:
+        print("\nDriver mode deactivated!")
 
 # find rider a driver and create a ride
 def find_driver():
@@ -216,7 +223,7 @@ def find_driver():
     cur_obj.execute(query2, (rideID, pickup, dropoff, now, userID, driverID))
     conn.commit()
     
-    print("This is your rideID: " + str(rideID))
+    print("\nThis is your rideID: " + str(rideID))
     
 # find an unused rideID
 def new_rideID():
@@ -237,17 +244,17 @@ def rate_driver():
     driver_info(last_driverID)
     
     while True:
-        print("Is this the correct driver you would like to rate? Yes (1) or No (2)")
+        print("\nIs this the correct driver you would like to rate? Yes (1) or No (2)")
         isCorrect = helper.get_choice([1,2])
         
         if isCorrect == 1:
-            user_rating = input("On a scale of 1-5, what would you like to rate your driver?\nRating: ")
+            user_rating = input("\nOn a scale of 1-5, what would you like to rate your driver?\nRating: ")
             cur_rating = current_rating(last_driverID)
             new_rating = float((int(user_rating) + int(cur_rating)) / 2)
             update_rating(last_driverID, new_rating)
             break
         else:
-            new_ride = input("Enter the rideID of the ride you would like to rate: ")
+            new_ride = input("\nEnter the rideID of the ride you would like to rate: ")
             new_driver = get_driverID(new_ride)
             driver_info(new_driver)
 
@@ -301,8 +308,7 @@ def update_rating(driver_id, new_rating):
     '''
     cur_obj.execute(query, (new_rating, driver_id))
     conn.commit()
-    print("Successfully rated driver!")
-    print(current_rating(driver_id))
+    print("\nSuccessfully rated driver!")
     
 # list all rides of rider
 def list_rider_rides():
@@ -314,8 +320,8 @@ def list_rider_rides():
     cur_obj.execute(query, (userID,))
     results = cur_obj.fetchall()
     
-    print("Your rides: ")
-    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Time and Date'],tablefmt='psql'))
+    print("\nYour rides: ")
+    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Date and Time'],tablefmt='psql'))
 
 # list all rides of driver
 def list_driver_rides():
@@ -327,8 +333,8 @@ def list_driver_rides():
     cur_obj.execute(query, (userID,))
     results = cur_obj.fetchall()
     
-    print("Your rides: ")
-    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Time and Date'],tablefmt='psql'))
+    print("\nYour rides: ")
+    print(tabulate(results, headers=['Ride ID', 'Pickup Location', 'Dropoff Location', 'Date and Time'],tablefmt='psql'))
 
 #main program
 startScreen()
@@ -348,6 +354,7 @@ else:
     # if user_type = 0, user is a driver
     user_type = check_user()
     if user_type == 1:
+        print("\nWelcome rider!")
         while True:
             user_choice = rider_menu()
             if user_choice == 1:
@@ -362,6 +369,7 @@ else:
                 rate_driver()
                 break
     else:
+        print("\nWelcome driver!")
         user_choice = driver_menu()
         if user_choice == 1:
             # view current rating
