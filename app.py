@@ -113,11 +113,11 @@ def highest_id():
     cur_obj.execute(query2)
     max_driverID = cur_obj.fetchone()[0]
     
-    if max_riderID == None & max_driverID == None:
+    if max_riderID == None and max_driverID == None:
         return 1
-    if max_riderID == 1 & max_driverID == None:
+    if max_riderID == 1 and max_driverID == None:
         return 2
-    if max_riderID == None & max_driverID == 1:
+    if max_riderID == None and max_driverID == 1:
         return 2
     
     if int(max_riderID) > int(max_driverID):
