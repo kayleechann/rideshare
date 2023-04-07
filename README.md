@@ -10,7 +10,7 @@
 * README.md
 * ER Diagram.pdf
 * Schema.pdf
-* Dump20230405.sql
+* data-dump.sql
 
 ### **Running Instructions**
 * pip3 install tabulate (if you don't have tabulate installed already)
