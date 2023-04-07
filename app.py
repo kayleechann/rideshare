@@ -9,7 +9,7 @@ import mysql.connector
 # Make connection
 conn = mysql.connector.connect(host="localhost",
     user = "root",
-    password = "cpsc408!",
+    password = "cpsc408",
     auth_plugin = 'mysql_native_password',
     database="RideShare")
 
@@ -206,11 +206,15 @@ def change_driver_mode():
 
 # find rider a driver and create a ride
 def find_driver():
+    # SELECT driverID
+    #FROM driver
+    #WHERE driverMode = 1
+
     # find a driver that has driver mode activated
     query = '''
-    SELECT driverID
+    SELECT driverID 
     FROM driver
-    WHERE driverMode = 1
+    ORDER BY RAND()
     '''
     cur_obj.execute(query)
     driverID = cur_obj.fetchone()[0]
@@ -241,6 +245,10 @@ def new_rideID():
     '''
     cur_obj.execute(query)
     max_riderID = cur_obj.fetchone()[0]
+
+    if max_riderID == None:
+        max_riderID = 1
+        return max_riderID
     
     new_id = max_riderID + 1
     return new_id
